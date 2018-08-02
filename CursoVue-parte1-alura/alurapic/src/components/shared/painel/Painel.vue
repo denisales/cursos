@@ -14,7 +14,7 @@ export default {
   props: ["titulo"],
   data() {
     return {
-      visivel: false
+      visivel: true
     };
   }
 };
@@ -46,6 +46,7 @@ export default {
 /* estilo do painel */
 
 .painel {
+  overflow: hidden;
   padding: 0 auto;
   border: solid 2px grey;
   display: inline-block;
