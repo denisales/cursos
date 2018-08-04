@@ -2,16 +2,18 @@
   <div class="corpo">
 
     <h1 class="titulo">{{ titulo }}</h1>
+    <p v-show="mensagem" class="centralizado">{{ mensagem }}</p>
     <div>
       <input type="search" class="filtro" placeholder="busca por titulo.." @input="filtro = $event.target.value">
        <p>{{ conta }}</p>
     </div>
     <ul class="lista-fotos">
-      <li class="lista-fotos-item" v-for="foto in fotosComFiltro">
+      <li class="lista-fotos-item" v-for="foto in fotosComFiltro" :key="foto._id">
 
         <meu-painel :titulo="foto.titulo">
-          <imagem-responsiva v-meu-transform:scale.animate="1.2" :url="foto.url" :titulo="foto.titulo"></imagem-responsiva>
-          <meu-botao tipo="button" rotulo="Remover" @botaoAtivado="remove(foto)" :confirmacao="false" estilo="perigo"></meu-botao>
+          <imagem-responsiva v-meu-transform.animate="180" :url="foto.url" :titulo="foto.titulo"></imagem-responsiva>
+          <meu-botao tipo="button" rotulo="Remover" @botaoAtivado="remove(foto)" :confirmacao="true" estilo="perigo"></meu-botao>
+          <router-link :to="{ name: 'altera', params: {id: foto._id}}"><meu-botao tipo="button" rotulo="Editar"></meu-botao></router-link>
         </meu-painel>
 
       </li>
@@ -24,6 +26,7 @@
 import Painel from "../shared/painel/Painel.vue";
 import ImagemResponsiva from "../shared/imagem-responsiva/ImagemResponsiva.vue";
 import Botao from "../shared/botao/Botao.vue";
+import FotoService from "../../domain/foto/FotoService";
 
 export default {
   components: {
@@ -35,7 +38,8 @@ export default {
     return {
       titulo: "Meu titulo",
       fotos: [],
-      filtro: ""
+      filtro: "",
+      mensagem: ""
     };
   },
 
@@ -57,23 +61,35 @@ export default {
 
   methods: {
     remove(foto) {
-        alert("remover a foto " + foto.titulo);
+       this.resource
+        this.service.apaga(foto._id)
+        .then(() => {
+            let indice = this.fotos.indexOf(foto);
+            this.fotos.splice(indice, 1);
+            this.mensagem = 'Foto removida com sucesso'
+          },
+          err => {
+           this.mensagem = err.message
+          }
+        )
     }
   },
 
   created() {
-    let promise = this.$http.get("http://localhost:3000/v1/fotos");
-    promise
-      .then(res => res.json())
-      .then(foto => (this.fotos = foto), err => console.log(err));
-    // promise.then(res => {
-    //   res.json().then(fotos => this.fotos = fotos)
-    // })
+
+    this.service = new FotoService(this.$resource)
+
+    this.service
+      .lista()
+      .then(fotos => this.fotos = fotos, err => this.mensagem = err.message);
   }
 };
 </script>
 
 <style lang="scss">
+.centralizado {
+  text-align: center;
+}
 .titulo {
   text-align: center;
 }

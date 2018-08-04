@@ -17,7 +17,7 @@ export default {
   },
   data() {
     return {
-      routes
+      routes: routes.filter(route => route.menu)
     };
   }
 };
@@ -29,4 +29,5 @@ export default {
   margin: 0 auto;
   width: 96%;
 }
+
 </style>
