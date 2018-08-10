@@ -1,17 +1,10 @@
-// Initialize Firebase
-var config = {
-    apiKey: "AIzaSyA6B5884XJNlJlsFi4gph7Ml_2VZUp3-5Y",
-    authDomain: "chat-vuejs-184a6.firebaseapp.com",
-    databaseURL: "https://chat-vuejs-184a6.firebaseio.com",
-    projectId: "chat-vuejs-184a6",
-    storageBucket: "chat-vuejs-184a6.appspot.com",
-    messagingSenderId: "84265754060"
-};
-var firebaseApp = firebase.initializeApp(config);
-
-//cria componente
-var chatComponent = Vue.extend({
-    template: `
+requirejs(['firebase-config'], function (config) {
+    var firebaseApp = firebase.initializeApp(config);
+    var db = firebaseApp.database();
+    
+    //cria componente
+    var chatComponent = Vue.extend({
+        template: `
             <style type="text/css">
                 .chat {
                     padding: 0;
@@ -40,7 +33,7 @@ var chatComponent = Vue.extend({
                 <div class="panel-heading">Chat</div>
                 <div class="panel-body">
                     <ul class="chat list-unstyled">
-                            <li class="clearfix" v-bind:class="{left: !isUser(o.email), right: isUser(o.email)}" v-for="o in chat.messages">
+                            <li class="clearfix" v-bind:class="{left: !isUser(o.email), right: isUser(o.email)}" v-for="o in messages">
                             <span v-bind:class="{'pull-left': !isUser(o.email), 'pull-right': isUser(o.email)}">
                                 <img v-bind:src="o.photo" alt="" class="img-circle">
                             </span>
@@ -55,49 +48,50 @@ var chatComponent = Vue.extend({
                 </div>
                 <div class="panel-footer">
                     <div class="input-group">
-                        <input type="text" class="form-control input-md" placeholder="Digite uma mensagem" />
+                        <input type="text" class="form-control input-md" placeholder="Digite uma mensagem" v-model="message" @keyup.enter="sendMessage"/>
                         <span class="input-group-btn">
-                            <button class="btn btn-success btn-md">Enviar</button>
+                            <button class="btn btn-success btn-md" @click="sendMessage">Enviar</button>
                         </span>
                     </div>
                 </div>
             </div>
     `,
-    data: function () {
-        return {
-            user: {
-                email: 'luiz@gmail.com',
-                name: 'Luiz Carlos'
+
+        created: function () {
+            var roomRef = 'chat/rooms/' + this.$route.params.room;
+            this.$bindAsArray('messages', db.ref(roomRef + '/messages'));
+            console.log('chatComponent')
+        },
+        data: function () {
+            return {
+                user: {
+                    email: localStorage.getItem('email'),
+                    name: localStorage.getItem('name'),
+                    photo: localStorage.getItem('photo'),
+                },
+                message: '',
+            }
+        },
+        methods: {
+            isUser: function (email) {
+                return this.user.email == email
             },
-            chat: {
-                messages: [
-                    {
-                        email: 'fulano@gmail.com',
-                        text: 'Mensagem 1',
-                        name: 'Fulano',
-                        photo: 'http://placehold.it/50/000fff/fff&text=00'
-                    },
-                    {
-                        email: 'luiz@gmail.com',
-                        text: 'Mensagem 2',
-                        name: 'Luiz Carlos',
-                        photo: 'http://placehold.it/50/ff0000/fff&text=EU'
-                    }
-                ]
+            sendMessage: function () {
+                this.$firebaseRefs.messages.push({
+                    name: this.user.name,
+                    email: this.user.email,
+                    text: this.message,
+                    photo: this.user.photo
+                });
+                this.message = ''
             }
         }
-    },
-    methods: {
-        isUser: function (email) {
-            return this.user.email == email
-        }
-    }
-});
+    });
 
-var db = firebaseApp.database();
 
-var roomsComponent = Vue.extend({
-    template: `
+
+    var roomsComponent = Vue.extend({
+        template: `
     <div class="col-md-4" v-for="o in rooms">
         <div class="panel panel-primary">
             <div class="panel-heading">
@@ -106,57 +100,121 @@ var roomsComponent = Vue.extend({
             <div class="panel-body">
                 {{o.description}}
                 <br>
-                <a href="javascript:void(0)" @click="goToChat(o)">Entrar</a>
+                <a href="javascript:void(0)" @click="openModal(o)">Entrar</a>
             </div>
         </div>
     </div>
-    <input type="text" v-model="text" @keyup.enter="insertData" />
-    <ul>
-        <li v-for="o in array">
-            {{o.text}}
-        </li>
-    </ul>
+    <div class="modal fade" id="modalLoginEmail" tabindex="-1" role="dialog" aria-labelledby="modalLoginEmail">
+		  		<div class="modal-dialog" role="document">
+		  			<div class="modal-content">
+		  				<div class="modal-header">
+		  					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		  					<h4 class="modal-title" id="exampleModalLabel"> Entre com as informações </h4>
+		  				</div>
+		  				<div class="modal-body">
+		  					<form>
+		  						<div class="form-group">
+		  							<input type="text" class="form-control" name="email" v-model="email" placeholder="e-mail">
+		  						</div>
+		  						<div class="form-group">
+		  							<input type="text" class="form-control" name="name" v-model="name" placeholder="Nome">
+		  						</div>		  						
+		  					</form>
+		  				</div>
+		  				<div class="modal-footer">
+		  					<button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+		  					<button type="button" class="btn btn-primary" @click="login">Login</button>
+		  				</div>
+		  			</div>
+		  		</div>
+		  	</div>
     `,
 
-    firebase:{
-        array: db.ref('array')
-    },
-    data: function () {
-        return {
-            rooms: [
-                { id: "001", name: "PHP", description: "Entusiasta do PHP" },
-                { id: "002", name: "Java", description: "Developer experts" },
-                { id: "003", name: "C#", description: "Os caras do C#" },
-                { id: "004", name: "C++", description: "Fissurados por programação" },
-                { id: "005", name: "Javascript", description: "Olha a web aí!" },
-                { id: "006", name: "Vue.js", description: "Chat dos caras do data-binding" },
-            ]
-        }
-    },
-    methods: {
-        goToChat: function(room){
-            this.$route.router.go('/chat/'+room.id)
-            console.log(room.id)
+        firebase: {
+            //referencia
+            rooms: db.ref('chat/rooms')
         },
-        insertData: function(){
-            this.$firebaseRefs.array.push({
-                text: this.text
-            })
+        data: function () {
+            return {
+                rooms: [
+                    { id: "001", name: "PHP123", description: "Entusiasta do PHP" },
+                    { id: "002", name: "Java", description: "Developer experts" },
+                    { id: "003", name: "C#", description: "Os caras do C#" },
+                    { id: "004", name: "C++", description: "Fissurados por programação" },
+                    { id: "005", name: "Javascript", description: "Olha a web aí!" },
+                    { id: "006", name: "Vue.js", description: "Chat dos caras do data-binding" },
+                ],
+                name: '',
+                email: '',
+                room: null
+            }
+        },
+        methods: {
+            login: function () {
+                localStorage.setItem('name', this.name);
+                localStorage.setItem('email', this.email);
+                localStorage.setItem('photo', 'http://www.gravatar.com/avatar/' + md5(this.email) + '.jpg')
+                $('#modalLoginEmail').modal('hide');
+                this.$route.router.go('/chat/' + this.room.id);
+            },
+            openModal: function (room) {
+                $('#modalLoginEmail').modal('show');
+                this.room = room
+            }
         }
-    }
+    })
+
+    var rooms = [
+        { id: "001", name: "PHP", description: "Entusiasta do PHP" },
+        { id: "002", name: "Java", description: "Developer experts" },
+        { id: "003", name: "C#", description: "Os caras do C#" },
+        { id: "004", name: "C++", description: "Fissurados por programação" },
+        { id: "005", name: "Javascript", description: "Olha a web aí!" },
+        { id: "006", name: "Vue.js", description: "Chat dos caras do data-binding" }
+    ]
+    var roomsCreateComponent = Vue.extend({
+
+        template: `
+        <ul>
+            <li v-for="o in rooms">
+                {{o.name}}
+            </li>
+        </ul>
+    `,
+
+        firebase: {
+            //referencia
+            rooms: db.ref('chat/rooms'),
+        },
+        ready: function () {
+            var chatRef = db.ref('chat');
+            var roomsChildren = chatRef.child('rooms');
+            rooms.forEach(function (room) { //chat/rooms/001
+                console.log('denis')
+                roomsChildren.child(room.id).set({
+                    name: room.name,
+                    description: room.description
+                })
+            })
+
+        },
+    })
+
+    var appComponent = Vue.extend({});
+
+    var router = new VueRouter();
+
+    router.map({
+        '/chat/:room': {
+            component: chatComponent
+        },
+        '/rooms': {
+            component: roomsComponent
+        },
+        '/rooms-create': {
+            component: roomsCreateComponent
+        }
+    })
+
+    router.start(appComponent, '#app')
 })
-
-var appComponent = Vue.extend({});
-
-var router = new VueRouter();
-
-router.map({
-    '/chat/:room': {
-        component: chatComponent
-    },
-    '/rooms': {
-        component: roomsComponent
-    }
-})
-
-router.start(appComponent, '#app')
