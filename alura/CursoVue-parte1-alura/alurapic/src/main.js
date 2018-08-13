@@ -7,7 +7,7 @@ import msg from './pt_BR';
 import { routes } from './routes';
 import './directives/Transform';
 
-// import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap/dist/css/bootstrap.css'
 
 Vue.use(VueResource);
 Vue.use(VueRouter);
