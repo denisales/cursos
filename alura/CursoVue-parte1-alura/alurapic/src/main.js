@@ -3,9 +3,11 @@ import VueResource from 'vue-resource';
 import App from './App.vue'
 import VueRouter from 'vue-router'
 import VeeValidate, { Validator } from 'vee-validate';
-import msg from './pt_BR'
-import { routes } from './routes'
-import './directives/Transform'
+import msg from './pt_BR';
+import { routes } from './routes';
+import './directives/Transform';
+
+// import 'bootstrap/dist/css/bootstrap.css'
 
 Vue.use(VueResource);
 Vue.use(VueRouter);

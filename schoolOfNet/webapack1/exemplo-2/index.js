@@ -1,4 +1,4 @@
-var $ = require('jquery')
 var liquidos = require('./liquidos')
+var $ = require('jquery')
 
-$("#content").html(liquidos.join('|'))
+$("#content").html(liquidos.join(' | '))

@@ -26,7 +26,7 @@
 import Painel from "../shared/painel/Painel.vue";
 import ImagemResponsiva from "../shared/imagem-responsiva/ImagemResponsiva.vue";
 import Botao from "../shared/botao/Botao.vue";
-import FotoService from "../../domain/foto/FotoService";
+import FotoService from "../../../domain/foto/FotoService";
 
 export default {
   components: {
